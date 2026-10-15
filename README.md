@@ -125,6 +125,6 @@ We’ll be looking for:
 We’re excited to see how you approach this task. Good luck, and happy coding! :)
 
 ## Contact Info 
- - Name: Your full name
- - Contact number: Your contact number
- - Email Address: Your email address
+ - Name: prasun jha
+ - Contact number: 8789249770
+ - Email Address: prasunjha080806@gmail.com

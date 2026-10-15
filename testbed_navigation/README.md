@@ -42,20 +42,39 @@ ros2 launch testbed_navigation localization.launch.py
 ros2 launch testbed_navigation navigation.launch.py
 ```
 
+- Bringup without its RViz: `ros2 launch testbed_bringup testbed_full_bringup.launch.py use_rviz:=false`
+- Then start RViz last: `ros2 launch testbed_navigation rviz.launch.py`
+
 ## Test Results
 
-Localization (robot stationary at spawn, after in-place spins):
-- AMCL error 0.02 m at spawn, 0.17 m after a slow 360° spin, 0.26 m after a fast 360° spin.
+Localization (AMCL vs Gazebo ground truth):
+- 0.02 m at spawn, 0.17 m after a slow 360° spin, 0.26 m after a fast 360° spin.
 
-Navigation (NavigateToPose via `ros2 action send_goal`, true pose from Gazebo):
-| Goal | Result | Final pose | Error |
-|---|---|---|---|
-| (2.0, 5.0) same room | SUCCEEDED | (1.79, 4.93) | 0.22 m |
-| (6.0, 7.0) same room | SUCCEEDED | (5.84, 6.88) | 0.20 m |
-| (3.6, -2.0) through doorway | SUCCEEDED | (3.69, -1.89) | 0.14 m |
+Navigation (NavigateToPose, true pose from Gazebo), two clean-start cycles:
+| Cycle | Goal | Result | Final pose | Error | Recoveries |
+|---|---|---|---|---|---|
+| 1 | (2.0, 5.0) same room | SUCCEEDED | (1.80, 4.98) | 0.20 m | 0 |
+| 1 | (6.0, 7.0) same room | SUCCEEDED | (5.93, 6.91) | 0.11 m | 0 |
+| 1 | (3.6, -2.0) through doorway | SUCCEEDED | (3.69, -1.91) | 0.13 m | 1 |
+| 1 | (0.0, 5.0) home | FAILED (timeout) | (0.26, 4.91) | 0.28 m | 21 |
+| 2 | (2.0, 5.0) same room | SUCCEEDED | (1.80, 4.95) | 0.21 m | 0 |
+| 2 | (6.0, 7.0) same room | SUCCEEDED | (5.86, 6.90) | 0.17 m | 0 |
+| 2 | (3.6, -2.0) through doorway | SUCCEEDED | (3.69, -1.91) | 0.13 m | 5 |
+| 2 | (0.0, 5.0) home | SUCCEEDED | (-0.01, 4.87) | 0.13 m | 4 |
 
-All within the 0.20 m xy goal tolerance plus controller stop distance. 0 TF "too old" errors.
-Screenshots / video: see `media/`.
+7/8 goals reached. The one failure was intermittent TF starvation after ~5 min of operation
+(controller stopped receiving map->odom; see Known Issues).
+
+Demo: see media/ (video + screenshots).
+
+## Known Issues
+
+- Intermittent TF starvation: under /tf load the controller_server can stop receiving AMCL's map->odom
+	("Transform data too old when converting from map to odom", transform time frozen). Lowering the
+	diff-drive update_rate from 100 to 30 Hz (/tf ~330 -> ~116 msg/s) fixed it in most runs; it recurred
+	once after ~5 min. Workaround: restart the stack (~/demo_start.sh).
+- RViz on Intel integrated graphics can briefly show "not responding" while building map/costmap textures
+	at startup. Start RViz last (rviz.launch.py) and, if needed: gsettings set org.gnome.mutter check-alive-timeout 60000
 
 ## Challenges
 
@@ -63,3 +82,5 @@ Screenshots / video: see `media/`.
 - `ROS_LOCALHOST_ONLY` with Cyclone limits participants (~10) -> Nav2 nodes failed "free participant index". Replaced with a Cyclone XML config.
 - `pkill -f ros2` does not kill node processes; leftover lifecycle managers caused map_server to hang unconfigured. Use `~/rkill.sh`, which matches `--ros-args`.
 - Lifecycle bonds timed out under load -> set `bond_timeout: 0.0`.
+- /tf flood (diff-drive at 100 Hz, odom + 2 wheel TFs) starved the controller's TF listener -> robot drove past goals. Fixed with update_rate 30.
+- Repeated force-killing of the Gazebo GUI left unkillable (D-state) processes; required a reboot. Close gzclient normally.

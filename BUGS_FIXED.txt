@@ -17,8 +17,7 @@ ENVIRONMENT ISSUES FOUND DURING TESTING (not code bugs)
 - ROS_LOCALHOST_ONLY with Cyclone limits participants (~10) -> Nav2 nodes failed "free participant index". Replaced with a Cyclone XML config.
 - `pkill -f ros2` does not kill node processes; leftover lifecycle managers caused map_server to hang unconfigured. Use a kill script matching "--ros-args".
 - Lifecycle bonds timed out under load -> set bond_timeout: 0.0.
-- /tf flood starved the Nav2 controller: gazebo_ros_diff_drive at update_rate 100 published
-	odom + 2 wheel transforms (~300 msg/s on /tf). The controller stopped receiving AMCL's
-	map->odom a few seconds after start ("Transform data too old when converting from map to odom",
-	transform time frozen while data time advanced), so the robot drove past goals.
-	Fixed: diff-drive update_rate 30 Hz (/tf ~116 msg/s). Result: 0 "too old" errors, all goals reached.
+- /tf flood starved the Nav2 controller: gazebo_ros_diff_drive at update_rate 100 published odom + 2 wheel
+  transforms (~300 msg/s). controller_server stopped receiving AMCL's map->odom a few seconds after start,
+  so the robot drove past goals ("Transform data too old"). Fixed: diff-drive update_rate 30 (/tf ~116 msg/s).
+  Result: 7/8 goals reached over two clean-start runs.

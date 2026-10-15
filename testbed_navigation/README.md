@@ -44,9 +44,18 @@ ros2 launch testbed_navigation navigation.launch.py
 
 ## Test Results
 
-AMCL position error was 0.02 m at baseline, 0.17 m after a slow 360-degree spin, and 0.26 m after a fast spin.
+Localization (robot stationary at spawn, after in-place spins):
+- AMCL error 0.02 m at spawn, 0.17 m after a slow 360° spin, 0.26 m after a fast 360° spin.
 
-In the Phase 5 run recorded in `~/run_report.md`, the first goal to `(3.0, 5.0)` failed because no action server was available and the goal was rejected. The conditional doorway goal to `(3.6, -2.0)` was not run because the first goal failed.
+Navigation (NavigateToPose via `ros2 action send_goal`, true pose from Gazebo):
+| Goal | Result | Final pose | Error |
+|---|---|---|---|
+| (2.0, 5.0) same room | SUCCEEDED | (1.79, 4.93) | 0.22 m |
+| (6.0, 7.0) same room | SUCCEEDED | (5.84, 6.88) | 0.20 m |
+| (3.6, -2.0) through doorway | SUCCEEDED | (3.69, -1.89) | 0.14 m |
+
+All within the 0.20 m xy goal tolerance plus controller stop distance. 0 TF "too old" errors.
+Screenshots / video: see `media/`.
 
 ## Challenges
 

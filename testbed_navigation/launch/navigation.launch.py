@@ -1,6 +1,6 @@
 
 import os
-
+from launch.actions import DeclareLaunchArgument, TimerAction
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
@@ -17,11 +17,6 @@ def generate_launch_description():
         "nav2_params.yaml",
     )
 
-    bt_xml = os.path.join(
-        get_package_share_directory("nav2_bt_navigator"),
-        "behavior_trees",
-        "navigate_w_replanning_and_recovery.xml",
-    )
 
     common_params = [
         params_file,
@@ -57,10 +52,7 @@ def generate_launch_description():
         executable="bt_navigator",
         name="bt_navigator",
         output="screen",
-        parameters=[
-            *common_params,
-            {"default_bt_xml_filename": bt_xml},
-        ],
+        parameters=common_params,
     )
 
     lifecycle_manager = Node(
@@ -71,7 +63,7 @@ def generate_launch_description():
         parameters=[
             {
                 "use_sim_time": use_sim_time,
-                "autostart": True,
+                "autostart": True, "bond_timeout": 0.0,
                 "node_names": [
                     "planner_server",
                     "controller_server",
@@ -93,6 +85,6 @@ def generate_launch_description():
             controller,
             behavior,
             bt_navigator,
-            lifecycle_manager,
+            TimerAction(period=2.0, actions=[lifecycle_manager]),
         ]
     )

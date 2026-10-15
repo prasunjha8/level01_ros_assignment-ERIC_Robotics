@@ -1,6 +1,6 @@
 
 import os
-
+from launch.actions import DeclareLaunchArgument, TimerAction
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
@@ -36,7 +36,7 @@ def generate_launch_description():
         parameters=[
             {
                 "use_sim_time": use_sim_time,
-                "autostart": True,
+                "autostart": True, "bond_timeout": 0.0,
                 "node_names": ["amcl"],
             }
         ],
@@ -44,12 +44,8 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            DeclareLaunchArgument(
-                "use_sim_time",
-                default_value="true",
-                description="Use Gazebo simulation time",
-            ),
-            amcl,
-            lifecycle_manager,
-        ]
+        DeclareLaunchArgument("use_sim_time", default_value="true"),
+        amcl,
+        TimerAction(period=2.0, actions=[lifecycle_manager]),
+    ]
     )
